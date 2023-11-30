@@ -1,6 +1,7 @@
 
 const Order = require("../model/orderModel")
-const qr=require("qrcode")
+const qr = require("qrcode")
+const schedule = require('node-schedule');
 module.exports.addorder = async (req, res, next) => {
     try {
 
@@ -105,6 +106,12 @@ module.exports.UpdateOrder = async (req, res, next) => {
     try {
         const { placed } = req.body;
         const updatedOrder = await Order.updateOne({ uniqueOrderId: req.params.id }, { $set: { placed: placed } })
+        // shedule job
+        schedule.scheduleJob(new Date(Date.now() + 2 * 60 * 60 * 1000), async () => {
+            await Order.updateOne({ uniqueOrderId: req.params.id },
+                { $set: { QRvalid: false } })
+            console.log('QR Code expire from the database');
+        });
         res.json(updatedOrder);
     } catch (error) {
         next(error);
@@ -142,16 +149,16 @@ module.exports.updateReject = async (req, res, next) => {
     }
 }
 // fetching through QR
-module.exports.getOrderThroughQr = async(req,res,next)=>{
+module.exports.getOrderThroughQr = async (req, res, next) => {
     try {
-        const {qrId}=req.body;
-        const order = await Order.find({uniqueOrderId:qrId,QRvalid:true})
+        const { qrId } = req.body;
+        const order = await Order.find({ uniqueOrderId: qrId, QRvalid: true })
         res.json(order)
     } catch (error) {
         next(error)
     }
 }
-module.exports.expireQr = async(req,res,next)=>{
+module.exports.expireQr = async (req, res, next) => {
     try {
         const updateOrder = await Order.updateOne({ uniqueOrderId: req.params.id },
             { $set: { QRvalid: false } })

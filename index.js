@@ -25,9 +25,6 @@ app.use("/api/stockEntry",stockEntryRoute)
 app.use("/api/stockIssue",stockIssueRoute)
 app.use("/api/coin",coinRoute)
 
-app.get("/get",(req,res)=>{
-    res.json({success:true})
-})
 mongoose.connect(process.env.MONGO_URL,()=>{
     console.log("connected to mongo successfully");
     
