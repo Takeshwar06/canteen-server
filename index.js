@@ -88,23 +88,20 @@ io.on("connection",(socket)=>{
     socket.on("complete-order",(completedOrder)=>{
        const orderComplete=user.get(completedOrder.auth[0])
         console.log("complete call",completedOrder.auth[0])
-        socket.broadcast.emit("testing",{name:"tiger",age:21})
-        socket.to(orderComplete).emit("completed-order",completedOrder);
+        // socket.broadcast.emit("testing",{name:"tiger",age:21})
+        socket.broadcast.emit("completed-order",completedOrder);
        
     })
 
     socket.on("take-order",({order,employeeId,index})=>{
         console.log("take-order")
-       employee.forEach((empSocket)=>{
-        console.log("empSocket",empSocket)
-        io.to(empSocket).emit("took-order",{order,employeeId,index});
-       })
+        socket.broadcast.emit("took-order",{order,employeeId,index});
         
     })
   
     socket.on("reject-order",(rejectedOrder)=>{
         const orderReject=user.get(rejectedOrder.auth[0])
         console.log("rejected",orderReject,user)
-        io.to(orderReject).emit("rejected-order",rejectedOrder);
+        socket.broadcast.emit("rejected-order",rejectedOrder);
     })
 })
