@@ -1,9 +1,10 @@
-const {addCoin, updateCoin, getCoin}=require("../controllers/coinController")
+const {  getCoin, createCoin, coinPlus, coinMinus}=require("../controllers/coinController")
 
 const router=require("express").Router();
 
-router.post("/addCoin",addCoin);
+router.post("/createcoin",createCoin);
 router.post("/getCoin",getCoin);
-router.post("/updateCoin",updateCoin);
+router.post("/coinplus",coinPlus);
+router.post("/coinminus",coinMinus);
 
 module.exports=router;

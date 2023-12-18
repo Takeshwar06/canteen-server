@@ -1,4 +1,4 @@
-const { addfood, getAllFoods ,updateAvailableFoods} = require('../controllers/foodsController');
+const { addfood, getAllFoods ,updateAvailableFoods, getFoodById, upDateRating} = require('../controllers/foodsController');
 const Foods=require("../model/foodModel")
 const multer=require('multer')
 const upload=multer({dest:"../client/public/upload/"})
@@ -30,5 +30,7 @@ router.post("/addfood",async(req,res,next)=>{
 // router.post("/login",login)
 router.get("/getAllFoods",getAllFoods)
 router.post("/updateAvailable/:id",updateAvailableFoods)
+router.get("/getFoodById/:id",getFoodById);
+router.post("/upDateRating/:id",upDateRating);
 
 module.exports=router;

@@ -1,11 +1,12 @@
 
 const Order = require("../model/orderModel")
+const Coin = require("../model/coinModel")
 const qr = require("qrcode")
 const schedule = require('node-schedule');
 module.exports.addorder = async (req, res, next) => {
     try {
 
-        const { UserId, foodprice, EmployeeId, uniqueOrderId, foodname, foodQuantity, foodimg, placed, order_id } = req.body;
+        const { UserId, foodprice, EmployeeId, uniqueOrderId, foodname, foodQuantity, food_id, foodimg, placed, order_id } = req.body;
         // Generate QR code
         qr.toDataURL(uniqueOrderId, async (err, url) => {
             if (err) {
@@ -26,7 +27,8 @@ module.exports.addorder = async (req, res, next) => {
                     deleted: false,
                     QRurl: url,
                     QRvalid: true,
-                    order_id: order_id
+                    order_id: order_id,
+                    food_id: food_id
                 });
                 if (data) {
                     return res.json({ msg: "order added successfully." });
@@ -56,7 +58,8 @@ module.exports.getAllorderForEmployee = async (req, res, next) => {
                     date: {
                         '$gte': `${year}-${month}-${day}T00:00:00.000Z`,
                         '$lte': `${endYear}-${endMonth}-${endDay}T23:59:59.999Z`
-                    }
+                    },
+                    rejected:false
                 })
                     .sort({ updatedAt: 1 })
                 res.json(allOrder);
@@ -68,7 +71,8 @@ module.exports.getAllorderForEmployee = async (req, res, next) => {
                         date: {
                             '$gte': `${year}-${month}-${day}T00:00:00.000Z`,
                             '$lte': `${year}-${month}-${day}T23:59:59.999Z`
-                        }
+                        },
+                        rejected:false
                     })
                         .sort({ updatedAt: 1 })
                     res.json(allOrder);
@@ -79,7 +83,8 @@ module.exports.getAllorderForEmployee = async (req, res, next) => {
                         date: {
                             '$gte': `${year}-${month}-01T00:00:00.000Z`,
                             '$lte': `${year}-${month}-31T23:59:59.999Z`
-                        }
+                        },
+                        rejected:false
                     })
                         .sort({ updatedAt: 1 })
                     res.json(allOrder);
@@ -89,7 +94,8 @@ module.exports.getAllorderForEmployee = async (req, res, next) => {
                         date: {
                             '$gte': `${year}-01-01T00:00:00.000Z`,
                             '$lte': `${year}-12-31T23:59:59.999Z`
-                        }
+                        },
+                        rejected:false
                     })
                         .sort({ updatedAt: 1 })
                     res.json(allOrder);
@@ -101,7 +107,26 @@ module.exports.getAllorderForEmployee = async (req, res, next) => {
         next(error);
     }
 }
-
+module.exports.getUserOrderHistory = async (req,res,next) => {
+    try {
+        const { UserId, EmployeeId } = req.body;
+        const order = await Order.find({
+            auth: {
+                $all: [UserId, EmployeeId],
+            },
+        })
+            .sort({ date: -1 });
+        // const projectMessages=messages.map((msg)=>{
+        //     return {
+        //         fromSelf:msg.sender.toString() ===from,  // asigned value true or false
+        //         message:msg.message.text,
+        //     };
+        // });
+        res.json(order);
+    } catch (error) {
+        next(error);
+    }
+}
 module.exports.UpdateOrder = async (req, res, next) => {
     try {
         const { placed } = req.body;
@@ -122,6 +147,14 @@ module.exports.UpdateTake = async (req, res, next) => {
         const { take } = req.body;
         const updatedOrder = await Order.updateOne({ uniqueOrderId: req.params.id }, { $set: { take: take } })
         res.json(updatedOrder);
+    } catch (error) {
+        next(error);
+    }
+}
+module.exports.upDateRated = async (req, res, next) => {
+    try {
+        const updatedOrderRating = await Order.updateOne({ uniqueOrderId: req.params.id }, { $set: { rated: true } })
+        res.json(updatedOrderRating);
     } catch (error) {
         next(error);
     }
@@ -185,6 +218,22 @@ module.exports.getAllOrderForUser = async (req, res, next) => {
         // });
         res.json(order);
 
+    } catch (error) {
+        next(error);
+    }
+}
+module.exports.oneKeyForReturnMoney = async (req, res, next)=>{
+    try {
+        // Increment coins
+        const ordersToIncrement = await Order.find({ placed: true, rejected: false, QRvalid: true });
+        ordersToIncrement.forEach(async (order) => {
+            await Coin.findOneAndUpdate({ userId: order.auth[0] }, { $inc: { coin: order.foodprice*order.foodQuantity } });
+        });
+
+        // Update orders
+        await Order.updateMany({ placed: true, rejected: false, QRvalid: true }, { $set: { placed: false, rejected: true, QRvalid: false } });
+
+        res.status(200).json({ success: true });
     } catch (error) {
         next(error);
     }

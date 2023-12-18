@@ -34,7 +34,15 @@ const orderSchema= new mongoose.Schema({
       type:Date,
       default:Date.now
   },
+   rated:{
+      type:Boolean,
+      default:false
+   },
    foodprice:Number,
+   food_id:{
+      type:String,
+      default:"tiger",
+   },
    order_id:String,
 });
 module.exports= mongoose.model("Order",orderSchema);
